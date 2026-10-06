@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Dash & Premio del Ganador</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.5);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a 75%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 850px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(14px);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-screen h1 {
+            font-size: 2.3rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #a5b4fc, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .menu-screen p.subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid var(--card-border);
+            border-radius: var(--radius-md);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+            opacity: 0.95;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #334155, #475569);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-top: 14px;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .round-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .timer-badge {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .timer-badge.warning {
+            color: var(--danger);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.08); }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            transition: width 0.1s linear;
+        }
+
+        .operation-display {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 32px 16px;
+            text-align: center;
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            color: #ffffff;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .answer-form {
+            display: flex;
+            gap: 12px;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid var(--card-border);
+            border-radius: var(--radius-md);
+            color: var(--text);
+            font-size: 1.3rem;
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .answer-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-submit {
+            width: auto;
+            padding: 0 28px;
+        }
+
+        .leaderboard-title {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #f1f5f9;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 12px;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 16px;
+        }
+
+        .leaderboard-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .leaderboard-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .player-name {
+            font-weight: 600;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .score-tag {
+            font-weight: 800;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .empty-leaderboard {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .winner-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--accent), #f43f5e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .winner-screen p {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+            perspective: 1000px;
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card-flip {
+            height: 190px;
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-flip.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border: 2px solid var(--card-border);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: var(--accent);
+            font-size: 2.8rem;
+        }
+
+        .card-front::after {
+            content: "Haz clic para revelar";
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            transform: rotateY(180deg);
+            font-size: 1.35rem;
+            font-weight: 800;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: var(--shadow);
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: scale(1);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            color: var(--success);
+        }
+
+        .modal-box p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 1rem;
+        }
+
+        .modal-box .score-summary {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 12px 0 24px;
+        }
+
+        .feedback-toast {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .feedback-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .feedback-toast.correct {
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .feedback-toast.incorrect {
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- SECCIÓN IZQUIERDA: ÁREA PRINCIPAL -->
+        <main class="card">
+            
+            <div id="feedbackToast" class="feedback-toast">¡Correcto!</div>
+
+            <!-- VISTA: MENÚ DE INICIO -->
+            <section id="menuScreen" class="screen active menu-screen">
+                <h1>Matemáticas - Programación 2026</h1>
+                <p class="subtitle">Hay 5 rondas, tu tiempo sobrante de cada ronda se sumará y esa será tu puntuación.</p>
+                
+                <form id="startForm" onsubmit="startGame(event)">
+                    <div class="input-group">
+                        <label for="usernameInput">Nombre de usuario</label>
+                        <input 
+                            type="text" 
+                            id="usernameInput" 
+                            placeholder="Ingresa un nombre" 
+                            required 
+                            maxlength="15"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button type="submit" class="btn">
+                        <span>Empezar juego</span> 
+                    </button>
+                </form>
+            </section>
+
+            <!-- VISTA: JUEGO -->
+            <section id="gameScreen" class="screen">
+                <div class="game-header">
+                    <span class="round-badge" id="roundBadge">Ronda 1 de 5</span>
+                    <div class="timer-badge" id="timerBadge">
+                        ⏱️ <span id="timerText">20</span>s
+                    </div>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+
+                <div class="operation-display" id="operationDisplay">
+                    --
+                </div>
+
+                <form id="answerForm" class="answer-form" onsubmit="checkAnswer(event)">
+                    <input 
+                        type="number" 
+                        id="answerInput" 
+                        class="answer-input" 
+                        placeholder="Respuesta" 
+                        required 
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="btn btn-submit">
+                        Enviar
+                    </button>
+                </form>
+            </section>
+
+            <!-- VISTA: SECCIÓN DE REVISAR GANADOR / CARTAS -->
+            <section id="winnerScreen" class="screen winner-screen">
+                <h2>Premio del Ganador</h2>
+                <p>Selecciona una carta. Puedes ganar: 2 décimas, dulces o nada. (El premio es al azar)</p>
+
+                <div class="cards-grid" id="cardsGrid">
+                    <!-- Cartas generadas dinámicamente -->
+                </div>
+
+                <button class="btn btn-secondary" onclick="showMenu()">
+                    Volver al Menú Principal
+                </button>
+            </section>
+
+        </main>
+
+        <!-- SECCIÓN DERECHA: TABLA DE CLASIFICACIÓN -->
+        <aside class="card">
+            <div class="leaderboard-title">
+                <span>Clasificación</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Puntos</span>
+            </div>
+            
+            <ul class="leaderboard-list" id="leaderboardList">
+                <!-- Se llena dinámicamente -->
+            </ul>
+
+            <!-- BOTÓN "REVISAR GANADOR" DEBAJO DE LA TABLA -->
+            <button class="btn btn-secondary" onclick="showWinnerSection()">
+                Revisar premios
+            </button>
+        </aside>
+
+    </div>
+
+    <!-- MODAL DE MENSAJE "HECHO" -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div id="modalBox" class="modal-box">
+            <h2 id="modalTitle">Hecho</h2>
+            <p id="modalDesc">Has completado las 5 rondas con éxito.</p>
+            <div id="modalScore" class="score-summary">0 pts</div>
+            <button class="btn" onclick="closeModalAndReturn()">Volver al Menú</button>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_ROUNDS = 5;
+        const TIME_PER_ROUND = 20;
+
+        let currentRound = 1;
+        let currentUser = "";
+        let currentAnswer = 0;
+        let timeRemaining = TIME_PER_ROUND;
+        let timerInterval = null;
+        let accumulatedRemainingTime = 0;
+
+        // PERSISTENCIA DESACTIVADA: Se usa únicamente un array en memoria volátil.
+        // Al recargar la página, este array vuelve a estar completamente vacío.
+        let memoryLeaderboard = [];
+
+        // Referencias del DOM
+        const menuScreen = document.getElementById('menuScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const winnerScreen = document.getElementById('winnerScreen');
+        const usernameInput = document.getElementById('usernameInput');
+        const roundBadge = document.getElementById('roundBadge');
+        const timerBadge = document.getElementById('timerBadge');
+        const timerText = document.getElementById('timerText');
+        const progressBar = document.getElementById('progressBar');
+        const operationDisplay = document.getElementById('operationDisplay');
+        const answerInput = document.getElementById('answerInput');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalScore = document.getElementById('modalScore');
+        const feedbackToast = document.getElementById('feedbackToast');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLeaderboard();
+        });
+
+        function generateMathOperation() {
+            const types = ['add', 'subtract', 'multiply', 'divide'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let num1, num2, symbol;
+
+            switch (type) {
+                case 'add':
+                    num1 = Math.floor(Math.random() * 45) + 12;
+                    num2 = Math.floor(Math.random() * 45) + 12;
+                    symbol = '+';
+                    currentAnswer = num1 + num2;
+                    break;
+                case 'subtract':
+                    num1 = Math.floor(Math.random() * 50) + 20;
+                    num2 = Math.floor(Math.random() * num1);
+                    symbol = '-';
+                    currentAnswer = num1 - num2;
+                    break;
+                case 'multiply':
+                    num1 = Math.floor(Math.random() * 11) + 3;
+                    num2 = Math.floor(Math.random() * 12) + 2;
+                    symbol = '×';
+                    currentAnswer = num1 * num2;
+                    break;
+                case 'divide':
+                    num2 = Math.floor(Math.random() * 9) + 2;
+                    currentAnswer = Math.floor(Math.random() * 12) + 2;
+                    num1 = num2 * currentAnswer;
+                    symbol = '÷';
+                    break;
+            }
+
+            operationDisplay.textContent = `${num1} ${symbol} ${num2}`;
+        }
+
+        function startGame(event) {
+            event.preventDefault();
+            const username = usernameInput.value.trim();
+
+            if (!username) return;
+
+            currentUser = username;
+            currentRound = 1;
+            accumulatedRemainingTime = 0;
+
+            switchScreen(gameScreen);
+            loadRound();
+        }
+
+        function loadRound() {
+            roundBadge.textContent = `Ronda ${currentRound} de ${TOTAL_ROUNDS}`;
+            answerInput.value = '';
+            answerInput.focus();
+
+            generateMathOperation();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = TIME_PER_ROUND;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerUI();
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            timerText.textContent = timeRemaining;
+            const percentage = (timeRemaining / TIME_PER_ROUND) * 100;
+            progressBar.style.width = `${percentage}%`;
+
+            if (timeRemaining <= 5) {
+                timerBadge.classList.add('warning');
+            } else {
+                timerBadge.classList.remove('warning');
+            }
+        }
+
+        function handleTimeOut() {
+            showToast("Operación fallida (0 pts)", "incorrect");
+            nextRound();
+        }
+
+        function checkAnswer(event) {
+            event.preventDefault();
+            const userAnswer = parseInt(answerInput.value.trim(), 10);
+
+            if (isNaN(userAnswer)) return;
+
+            clearInterval(timerInterval);
+
+            if (userAnswer === currentAnswer) {
+                accumulatedRemainingTime += timeRemaining;
+                showToast(`¡Correcto! +${timeRemaining} pts`, "correct");
+            } else {
+                showToast("Operación fallida (0 pts)", "incorrect");
+            }
+
+            nextRound();
+        }
+
+        function nextRound() {
+            if (currentRound < TOTAL_ROUNDS) {
+                currentRound++;
+                setTimeout(() => {
+                    loadRound();
+                }, 800);
+            } else {
+                setTimeout(() => {
+                    handleGameComplete();
+                }, 800);
+            }
+        }
+
+        function showToast(msg, type) {
+            feedbackToast.textContent = msg;
+            feedbackToast.className = `feedback-toast ${type} show`;
+            setTimeout(() => {
+                feedbackToast.classList.remove('show');
+            }, 1200);
+        }
+
+        function handleGameComplete() {
+            // Se agrega únicamente en memoria temporal
+            memoryLeaderboard.push({ username: currentUser, score: accumulatedRemainingTime });
+            renderLeaderboard();
+
+            modalTitle.textContent = "Hecho";
+            modalDesc.textContent = `¡Felicitaciones ${currentUser}! Has completado las ${TOTAL_ROUNDS} operaciones.`;
+            modalScore.textContent = `${accumulatedRemainingTime} pts totales`;
+            modalOverlay.classList.add('active');
+        }
+
+        function renderLeaderboard() {
+            leaderboardList.innerHTML = '';
+
+            if (memoryLeaderboard.length === 0) {
+                leaderboardList.innerHTML = `<li class="empty-leaderboard">Sin puntuaciones aún.</li>`;
+                return;
+            }
+
+            memoryLeaderboard.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                
+                li.innerHTML = `
+                    <div class="player-info">
+                        <span class="rank">${index + 1}</span>
+                        <span class="player-name" title="${item.username}">${escapeHTML(item.username)}</span>
+                    </div>
+                    <span class="score-tag">${item.score} pts</span>
+                `;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        function closeModalAndReturn() {
+            modalOverlay.classList.remove('active');
+            showMenu();
+        }
+
+        function switchScreen(targetScreen) {
+            clearInterval(timerInterval);
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            targetScreen.classList.add('active');
+        }
+
+        function showMenu() {
+            switchScreen(menuScreen);
+            usernameInput.value = '';
+        }
+
+        function showWinnerSection() {
+            switchScreen(winnerScreen);
+            setupCards();
+        }
+
+        function setupCards() {
+            const prizes = ["Nada", "2 decimas", "Dulces"];
+            
+            // Algoritmo Fisher-Yates para asegurarnos de que el orden sea totalmente aleatorio e impredecible
+            for (let i = prizes.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [prizes[i], prizes[j]] = [prizes[j], prizes[i]];
+            }
+
+            cardsGrid.innerHTML = '';
+            prizes.forEach((prize) => {
+                const card = document.createElement('div');
+                card.className = 'card-flip';
+                card.innerHTML = `
+                    <div class="card-face card-front">❓</div>
+                    <div class="card-face card-back">${prize}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    card.classList.add('flipped');
+                });
+
+                cardsGrid.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
